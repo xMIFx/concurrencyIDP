@@ -2,12 +2,17 @@ package main
 
 import "fmt"
 
+type Position struct {
+	x, y int;
+}
+type Checker func(checker Checker, previousPosition Position, currentPosition Position, nextPositions... Position) Position
+
 var points = [][]byte{
 	{0, 1, 0, 1, 0},
 	{0, 1, 0, 1, 0},
 	{0, 1, 0, 1, 0},
 	{0, 1, 0, 1, 0},
-	{0, 1, 1, 1, 0}}
+	{0, 1, 1, 0, 1}}
 
 var jobsCount int = 1;
 
@@ -66,115 +71,46 @@ func checkPosition(p Position) Position {
 	if p.x == 0 && p.y == 0 {
 		return p;
 	}
-	checkLeft_1 := func(p Position) Position {
-		return Position{1,1}
-	}
-	checkRight_1 := func(p Position) Position {
-		return Position{1,1}
-	}
-	checkTop_1 := func(p Position) Position {
-		return Position{1,1}
-	}
-	checkBot_1 := func(p Position) Position {
-		return Position{1,1}
-	}
-	return check(p,
-		checkLeft_1,
-		checkRight_1,
-		checkTop_1,
-		checkBot_1)
-}
-func check(p Position, f... func(p Position, ) Position) Position {
+	/*var checked []Position = []Position{}*/
+	check := func(checker Checker, previousPosition Position, currentPosition Position, nextPositions... Position) Position{
+		if points[currentPosition.y][currentPosition.x] == 0 {
+			return previousPosition
+		}
+		var min Position = currentPosition;
+		for _, p := range nextPositions {
+			if p.x < currentPosition.x && currentPosition.x > 0 {
+				min = checkMin(min, checker(checker, currentPosition, p, getNextPositions(p, 1, 0)...))
+			}
+			if p.x > currentPosition.x && currentPosition.x < len(points[0]) - 1 {
+				min = checkMin(min, checker(checker, currentPosition, p, getNextPositions(p, -1, 0)...))
+			}
+			if p.y < currentPosition.y && currentPosition.y > 0 {
+				min = checkMin(min, checker(checker, currentPosition, p, getNextPositions(p, 0, 1)...))
+			}
+			if p.y > currentPosition.y && currentPosition.y < len(points) - 1 {
+				min = checkMin(min, checker(checker, currentPosition, p, getNextPositions(p, 0, -1)...))
+			}
 
-	var min Position = p;
-	if p.x > 0 {
-		min = checkMin(min, checkLeft(Position{p.x - 1, p.y}))
+		}
+		return min
 	}
-	if p.x < len(points[0]) - 1 {
-		min = checkMin(min, checkRight(Position{p.x + 1, p.y}))
-	}
-	if p.y > 0 {
-		min = checkMin(min, checkTop(Position{p.x, p.y - 1}))
-	}
+	return check(check, p, p, getNextPositions(p, 0, 0)...)
+}
 
-	if p.y < len(points) - 1 {
-		min = checkMin(min, checkBottom(Position{p.x, p.y + 1}))
+func getNextPositions(p Position, excludeX int, excludeY int) ([]Position) {
+	if excludeX == -1 {
+		return []Position{Position{p.x + 1, p.y}, Position{p.x, p.y - 1}, Position{p.x, p.y + 1}}
 	}
-	return min
-}
-func checkLeft(p Position) Position {
-	var min Position = p;
-	fmt.Println("check left", p)
-	if points[p.y][p.x] == 0 {
-		return Position{p.x + 1, p.y}
+	if excludeX == 1 {
+		return []Position{Position{p.x - 1, p.y}, Position{p.x, p.y - 1}, Position{p.x, p.y + 1}}
 	}
-	if p.x > 0 {
-		min = checkMin(min, checkLeft(Position{p.x - 1, p.y}))
+	if excludeY == -1 {
+		return []Position{Position{p.x + 1, p.y}, Position{p.x - 1, p.y}, Position{p.x, p.y + 1}}
 	}
-	if p.y > 0 {
-		min = checkMin(min, checkTop(Position{p.x, p.y - 1}))
+	if excludeY == 1 {
+		return []Position{Position{p.x + 1, p.y}, Position{p.x - 1, p.y}, Position{p.x, p.y - 1}}
 	}
-
-	if p.y < len(points) - 1 {
-		min = checkMin(min, checkBottom(Position{p.x, p.y + 1}))
-	}
-	fmt.Println("left return", min)
-	return min
-}
-func checkRight(p Position) Position {
-	var min Position = p;
-	fmt.Println("check right", p)
-	if points[p.y][p.x] == 0 {
-		return Position{p.x - 1, p.y}
-	}
-	if p.x < len(points[0]) - 1 {
-		min = checkMin(min, checkRight(Position{p.x + 1, p.y}))
-	}
-	if p.y > 0 {
-		min = checkMin(min, checkTop(Position{p.x, p.y - 1}))
-	}
-
-	if p.y < len(points) - 1 {
-		min = checkMin(min, checkBottom(Position{p.x, p.y + 1}))
-	}
-	fmt.Println("right return", min)
-	return min
-}
-func checkTop(p Position) Position {
-	var min Position = p;
-	fmt.Println("check top", p)
-	if points[p.y][p.x] == 0 {
-		return Position{p.x, p.y + 1}
-	}
-	if p.x > 0 {
-		min = checkMin(min, checkLeft(Position{p.x - 1, p.y}))
-	}
-	if p.x < len(points[0]) - 1 {
-		min = checkMin(min, checkRight(Position{p.x + 1, p.y}))
-	}
-	if p.y > 0 {
-		min = checkMin(min, checkTop(Position{p.x, p.y - 1}))
-	}
-	fmt.Println("top return", min)
-	return min
-}
-func checkBottom(p Position) Position {
-	var min Position = p;
-	fmt.Println("check bot", p)
-	if points[p.y][p.x] == 0 {
-		return Position{p.x, p.y - 1}
-	}
-	if p.x > 0 {
-		min = checkMin(min, checkLeft(Position{p.x - 1, p.y}))
-	}
-	if p.x < len(points[0]) - 1 {
-		min = checkMin(min, checkRight(Position{p.x + 1, p.y}))
-	}
-	if p.y < len(points) - 1 {
-		min = checkMin(min, checkBottom(Position{p.x, p.y + 1}))
-	}
-	fmt.Println("bot return", min)
-	return min
+	return []Position{Position{p.x + 1, p.y}, Position{p.x - 1, p.y}, Position{p.x, p.y - 1}, Position{p.x, p.y + 1}}
 }
 
 func checkMin(p Position, p1 Position) Position {
@@ -190,6 +126,10 @@ func checkMin(p Position, p1 Position) Position {
 	}
 	return p1
 }
+func equals(p Position, p1 Position) bool {
+
+	return (p.y == p1.y &&  p.x == p1.x)
+}
 func contains(s []Position, e Position) bool {
 	for _, a := range s {
 		if a.x == e.x && a.y == e.y {
@@ -199,7 +139,4 @@ func contains(s []Position, e Position) bool {
 	return false
 }
 
-type Position struct {
-	x, y int;
-}
 
