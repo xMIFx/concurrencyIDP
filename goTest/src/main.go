@@ -16,7 +16,7 @@ var points = [][]byte{
 	{0, 1, 1, 1, 0},
 	{0, 1, 1, 1, 1}}
 
-var jobsCount int = 1;
+var jobsCount int = 8;
 
 func main() {
 	task := make(chan Position)
@@ -112,10 +112,7 @@ func checkMin(p Position, p1 Position) Position {
 	}
 	return p1
 }
-func equals(p Position, p1 Position) bool {
 
-	return (p.y == p1.y &&  p.x == p1.x)
-}
 func contains(s []Position, e Position) bool {
 	for _, a := range s {
 		if a.x == e.x && a.y == e.y {
