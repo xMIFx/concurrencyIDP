@@ -5,14 +5,16 @@ import "fmt"
 type Position struct {
 	x, y int;
 }
-type Checker func(checker Checker, previousPosition Position, currentPosition Position, nextPositions... Position) Position
+type Checker func(checker Checker, currentPosition Position)
 
 var points = [][]byte{
+	{0, 1, 1, 1, 0},
 	{0, 1, 0, 1, 0},
-	{0, 1, 0, 1, 0},
-	{0, 1, 0, 1, 0},
-	{0, 1, 0, 1, 0},
-	{0, 1, 1, 0, 1}}
+	{0, 1, 1, 1, 0},
+	{0, 1, 1, 1, 0},
+	{0, 1, 1, 1, 0},
+	{0, 1, 1, 1, 0},
+	{0, 1, 1, 1, 1}}
 
 var jobsCount int = 1;
 
@@ -71,46 +73,30 @@ func checkPosition(p Position) Position {
 	if p.x == 0 && p.y == 0 {
 		return p;
 	}
-	/*var checked []Position = []Position{}*/
-	check := func(checker Checker, previousPosition Position, currentPosition Position, nextPositions... Position) Position{
-		if points[currentPosition.y][currentPosition.x] == 0 {
-			return previousPosition
+	var checked []Position = []Position{}
+	var min Position = p;
+	check := func(checker Checker, currentPosition Position) {
+		if points[currentPosition.y][currentPosition.x] == 0 || contains(checked, currentPosition) {
+			return
 		}
-		var min Position = currentPosition;
-		for _, p := range nextPositions {
-			if p.x < currentPosition.x && currentPosition.x > 0 {
-				min = checkMin(min, checker(checker, currentPosition, p, getNextPositions(p, 1, 0)...))
-			}
-			if p.x > currentPosition.x && currentPosition.x < len(points[0]) - 1 {
-				min = checkMin(min, checker(checker, currentPosition, p, getNextPositions(p, -1, 0)...))
-			}
-			if p.y < currentPosition.y && currentPosition.y > 0 {
-				min = checkMin(min, checker(checker, currentPosition, p, getNextPositions(p, 0, 1)...))
-			}
-			if p.y > currentPosition.y && currentPosition.y < len(points) - 1 {
-				min = checkMin(min, checker(checker, currentPosition, p, getNextPositions(p, 0, -1)...))
-			}
+		checked = append(checked, currentPosition)
+		min = checkMin(min, currentPosition)
 
+		if currentPosition.x > 0 {
+			checker(checker, Position{currentPosition.x - 1, currentPosition.y})
 		}
-		return min
+		if currentPosition.x < len(points[0]) - 1 {
+			checker(checker, Position{currentPosition.x + 1, currentPosition.y})
+		}
+		if currentPosition.y > 0 {
+			checker(checker, Position{currentPosition.x, currentPosition.y - 1})
+		}
+		if currentPosition.y < len(points) - 1 {
+			checker(checker, Position{currentPosition.x, currentPosition.y + 1})
+		}
 	}
-	return check(check, p, p, getNextPositions(p, 0, 0)...)
-}
-
-func getNextPositions(p Position, excludeX int, excludeY int) ([]Position) {
-	if excludeX == -1 {
-		return []Position{Position{p.x + 1, p.y}, Position{p.x, p.y - 1}, Position{p.x, p.y + 1}}
-	}
-	if excludeX == 1 {
-		return []Position{Position{p.x - 1, p.y}, Position{p.x, p.y - 1}, Position{p.x, p.y + 1}}
-	}
-	if excludeY == -1 {
-		return []Position{Position{p.x + 1, p.y}, Position{p.x - 1, p.y}, Position{p.x, p.y + 1}}
-	}
-	if excludeY == 1 {
-		return []Position{Position{p.x + 1, p.y}, Position{p.x - 1, p.y}, Position{p.x, p.y - 1}}
-	}
-	return []Position{Position{p.x + 1, p.y}, Position{p.x - 1, p.y}, Position{p.x, p.y - 1}, Position{p.x, p.y + 1}}
+	check(check, p)
+	return min
 }
 
 func checkMin(p Position, p1 Position) Position {
